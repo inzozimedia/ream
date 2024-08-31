@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            padding: 10px;
+            background-color: #0078D4;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header .title {
+            font-size: 24px;
+            margin-left: 10px;
+        }
+        header .buttons {
+            margin-right: 10px;
+        }
+        header .buttons img {
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .chat-area {
+            background-color: white;
+            width: 80%;
+            padding: 20px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+        .chat-area h2 {
+            margin-top: 0;
+        }
+        .add-person-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+            width: 300px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+        .add-person-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .add-person-box button {
+            background-color: #0078D4;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 45%;
+            margin: 5px;
+        }
+        .add-person-box button:hover {
+            background-color: #005a9e;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title">REAM</div>
+        <div class="buttons">
+            <img src="add-person.png" alt="Add New Person" id="addPersonButton">
+            <img src="profile.png" alt="Profile">
+        </div>
+    </header>
+
+    <div class="chat-area">
+        <h2>Chat Areas</h2>
+        <div id="chatGrid"></div>
+    </div>
+
+    <div class="add-person-box" id="addPersonBox">
+        <input type="email" id="emailInput" placeholder="Enter email">
+        <div>
+            <button id="addButton">ADD</button>
+            <button id="cancelButton">CANCEL</button>
+        </div>
+        <div id="responseMessage"></div>
+    </div>
+
+    <!-- Supabase integration script -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        const supabaseUrl = 'https://yxpteinabnrwckbrtkcr.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4cHRlaW5hYm5yd2NrYnJ0a2NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUwOTEyMjYsImV4cCI6MjA0MDY2NzIyNn0.RW9ZWejT73lq2ZB0vVX4zeXF6HOFwp2x6HTZddp2AI8'; // Replace with your actual Supabase key
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Toggle the add person box visibility
+        const addPersonButton = document.getElementById('addPersonButton');
+        const addPersonBox = document.getElementById('addPersonBox');
+        const cancelButton = document.getElementById('cancelButton');
+
+        addPersonButton.addEventListener('click', () => {
+            addPersonBox.style.display = 'block';
+        });
+
+        cancelButton.addEventListener('click', () => {
+            addPersonBox.style.display = 'none';
+        });
+
+        // Add person to chat area
+        const addButton = document.getElementById('addButton');
+        const emailInput = document.getElementById('emailInput');
+        const responseMessage = document.getElementById('responseMessage');
+        const chatGrid = document.getElementById('chatGrid');
+
+        addButton.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            responseMessage.textContent = '';
+
+            if (email) {
+                const { data, error } = await supabase.auth.admin.getUserByEmail(email);
+                
+                if (error) {
+                    console.error('Error fetching user:', error.message);
+                    responseMessage.textContent = `Error: ${error.message}`;
+                } else if (data) {
+                    console.log('User found:', data);
+                    responseMessage.style.color = 'green';
+                    responseMessage.textContent = 'User added successfully!';
+                    
+                    // Add the user to the chat area
+                    const userDiv = document.createElement('div');
+                    userDiv.textContent = data.email;
+                    chatGrid.appendChild(userDiv);
+
+                    addPersonBox.style.display = 'none';
+                } else {
+                    console.log('User not found');
+                    responseMessage.style.color = 'red';
+                    responseMessage.textContent = 'User not found!';
+                }
+            } else {
+                responseMessage.textContent = 'Please enter a valid email address.';
+            }
+        });
+    </script>
+</body>
+</html>
